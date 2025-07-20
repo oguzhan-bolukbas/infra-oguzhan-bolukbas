@@ -75,3 +75,8 @@ brew install hashicorp/tap/hashicorp-vagrant
 vagrant plugin install vagrant-vmware-desktop
 ```
 
+## Step 3 - Create VMs
+
+For detailed Vagrant setup and VM management instructions, see [vagrant/README.md](vagrant/README.md)
+
+
