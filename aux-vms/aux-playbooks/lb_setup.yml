@@ -1,0 +1,50 @@
+---
+- name: Load Balancer (HAProxy) Setup
+  hosts: lb
+  become: yes
+  tasks:
+    - name: Install HAProxy
+      apt:
+        name: haproxy
+        state: present
+        update_cache: yes
+
+    - name: Configure HAProxy for Kubernetes API
+      copy:
+        dest: /etc/haproxy/haproxy.cfg
+        content: |
+          global
+            log /dev/log    local0
+            log /dev/log    local1 notice
+            chroot /var/lib/haproxy
+            stats socket /run/haproxy/admin.sock mode 660 level admin expose-fd listeners
+            stats timeout 30s
+            user haproxy
+            group haproxy
+            daemon
+
+          defaults
+            log     global
+            mode    tcp
+            option  tcplog
+            option  dontlognull
+            timeout connect 5000
+            timeout client  50000
+            timeout server  50000
+
+          frontend k8s-api
+            bind *:6443
+            default_backend k8s-masters
+
+          backend k8s-masters
+            balance roundrobin
+            option tcp-check
+            server k8s-master1 172.18.9.101:6443 check
+            server k8s-master2 172.18.9.102:6443 check
+        mode: '0644'
+
+    - name: Restart HAProxy
+      service:
+        name: haproxy
+        state: restarted
+        enabled: yes

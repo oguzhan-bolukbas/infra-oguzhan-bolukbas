@@ -1,0 +1,93 @@
+---
+- name: Vault Server Setup
+  hosts: vault
+  become: yes
+  tasks:
+    - name: Install dependencies
+      apt:
+        name:
+          - unzip
+          - wget
+        state: present
+        update_cache: yes
+
+    - name: Download Vault binary
+      get_url:
+        url: https://releases.hashicorp.com/vault/1.15.4/vault_1.15.4_linux_arm64.zip
+        dest: /tmp/vault.zip
+
+    - name: Unzip Vault binary
+      unarchive:
+        src: /tmp/vault.zip
+        dest: /usr/local/bin/
+        remote_src: yes
+
+    - name: Ensure Vault is executable
+      file:
+        path: /usr/local/bin/vault
+        mode: '0755'
+
+    - name: Create Vault user and directories
+      user:
+        name: vault
+        system: yes
+      register: vault_user
+
+    - name: Create Vault config directory
+      file:
+        path: /etc/vault.d
+        state: directory
+        owner: vault
+        group: vault
+        mode: '0750'
+
+    - name: Create Vault data directory
+      file:
+        path: /opt/vault/data
+        state: directory
+        owner: vault
+        group: vault
+        mode: '0750'
+
+    - name: Create minimal Vault config
+      copy:
+        dest: /etc/vault.d/vault.hcl
+        content: |
+          storage "file" {
+            path = "/opt/vault/data"
+          }
+          listener "tcp" {
+            address     = "0.0.0.0:8200"
+            tls_disable = 1
+          }
+          disable_mlock = true
+        owner: vault
+        group: vault
+        mode: '0640'
+
+    - name: Create systemd service for Vault
+      copy:
+        dest: /etc/systemd/system/vault.service
+        content: |
+          [Unit]
+          Description=HashiCorp Vault
+          After=network.target
+
+          [Service]
+          User=vault
+          Group=vault
+          ExecStart=/usr/local/bin/vault server -config=/etc/vault.d/vault.hcl
+          ExecReload=/bin/kill --signal HUP $MAINPID
+          Restart=on-failure
+          LimitNOFILE=65536
+
+          [Install]
+          WantedBy=multi-user.target
+        mode: '0644'
+
+    - name: Reload systemd and start Vault
+      systemd:
+        daemon_reload: yes
+        name: vault
+        state: started
+        enabled: yes

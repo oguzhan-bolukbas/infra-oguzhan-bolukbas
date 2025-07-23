@@ -1,0 +1,25 @@
+---
+- name: NGINX Ingress Controller Setup
+  hosts: k8s_cluster
+  become: yes
+  tasks:
+    - name: Create ingress-nginx namespace
+      kubernetes.core.k8s:
+        api_version: v1
+        kind: Namespace
+        name: ingress-nginx
+        state: present
+
+    - name: Deploy NGINX Ingress Controller (using official manifest)
+      kubernetes.core.k8s:
+        state: present
+        src: https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.1/deploy/static/provider/cloud/deploy.yaml
+
+    - name: Wait for ingress controller pods to be ready
+      kubernetes.core.k8s_info:
+        kind: Pod
+        namespace: ingress-nginx
+      register: ingress_pods
+      until: ingress_pods.resources | selectattr('status.phase', 'equalto', 'Running') | list | length > 0
+      retries: 20
+      delay: 15
