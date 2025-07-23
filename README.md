@@ -31,7 +31,7 @@ The VMs will be run on VMware Fusion program
 
 To specify and setup VMs on VMware Fusion, Vagrant and its required plugins will be used
 
-## Step 2 - Install or check the prerequisite tools
+## Step 2 - Install prerequisite tools
 
 0) Install Homebrew via the link below  
 [https://brew.sh/](https://brew.sh/)
@@ -75,8 +75,22 @@ brew install hashicorp/tap/hashicorp-vagrant
 vagrant plugin install vagrant-vmware-desktop
 ```
 
-## Step 3 - Create VMs
+5) Create virtual environment of Python in here
+```bash
+python -m venv .venv
+source .venv/bin/activate 
+```
 
-For detailed Vagrant setup and VM management instructions, see [vagrant/README.md](vagrant/README.md)
+- Install Ansible
+```bash
+pip install ansible==10.7.0
+```
 
+## Step 3
+Follow the [Create-Aux-VMs.md](aux-vms/docs/Create-Aux-VMs.md) file to create auxiliary VMs (Vault, NFS, Load Balancer).
 
+## Step 4
+Follow the [kubespray/README.md](kubespray/README.md) file to create VMs for Kubernetes nodes.
+
+## Step 5
+Follow the [Deploy-K8s.md](aux-vms/docs/Deploy-K8s.md) file to install the Kubernetes.
