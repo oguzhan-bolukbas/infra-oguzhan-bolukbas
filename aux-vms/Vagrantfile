@@ -1,0 +1,37 @@
+
+# Standalone Vagrantfile for auxiliary VMs (lb, nfs, vault)
+Vagrant.configure("2") do |config|
+  # Set base box and default subnet if not set
+  config.vm.box = "bento/ubuntu-24.04"
+  $subnet ||= "172.18.8"
+
+  # Load Balancer (HAProxy/NGINX)
+  config.vm.define "lb" do |lb|
+    lb.vm.hostname = "lb"
+    lb.vm.network :private_network, ip: "#{$subnet}.101"
+    lb.vm.provider :vmware_desktop do |v|
+      v.vmx['memsize'] = 2048
+      v.vmx['numvcpus'] = 2
+    end
+  end
+
+  # NFS Server
+  config.vm.define "nfs" do |nfs|
+    nfs.vm.hostname = "nfs"
+    nfs.vm.network :private_network, ip: "#{$subnet}.102"
+    nfs.vm.provider :vmware_desktop do |v|
+      v.vmx['memsize'] = 4096
+      v.vmx['numvcpus'] = 2
+    end
+  end
+
+  # Vault Server
+  config.vm.define "vault" do |vault|
+    vault.vm.hostname = "vault"
+    vault.vm.network :private_network, ip: "#{$subnet}.103"
+    vault.vm.provider :vmware_desktop do |v|
+      v.vmx['memsize'] = 4096
+      v.vmx['numvcpus'] = 2
+    end
+  end
+end
